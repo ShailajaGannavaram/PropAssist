@@ -82,11 +82,6 @@ def get_ai_response(user_message, conversation_history, relevant_properties=None
             property_context += f"- {prop.title} | {prop.property_type} | {prop.location}, {prop.city} | Rs.{prop.price} | {prop.area_sqft} sqft | {prop.bedrooms} BHK\n"
 
     web_context = ""
-    if len(props_list) < 3:
-        web_results = search_web_for_properties(user_message)
-        if web_results:
-            web_context = f"\n\nAdditional current online listings:\n{web_results}"
-
     full_message = user_message + property_context + web_context
 
     messages.append({

@@ -1,0 +1,29 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Environment variables - NEVER upload this
+.env
+
+# Database
+*.sqlite3
+
+# CSV data files
+*.csv
+
+# Node
+frontend/node_modules/
+frontend/build/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini

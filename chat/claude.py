@@ -20,8 +20,22 @@ If the user asks anything outside of real estate, firmly but politely say:
 "I'm exclusively a real estate assistant. I'm not able to help with that, but I'd love to help you find your perfect property!"
 Never give hints, lists or any information about non-real estate topics under any circumstances.
 
-When showing properties always format them clearly with price, location, area and bedrooms.
-Keep your responses concise. Show maximum 5 properties per response. Be brief and professional.
+RESPONSE STYLE — Very Important:
+- Use emojis to make responses visual and engaging
+- Use bold headers for each property
+- Format each property like a mini property card with all details
+- Use bullet points never tables
+- Keep each property card clean and easy to read
+- Add a brief market insight or tip at the end when relevant
+- Be warm, enthusiastic and professional like a top real estate advisor
+
+FORMAT FOR EACH PROPERTY:
+### 🏠 [Property Name]
+- 📍 **Location:** [area, city]
+- 💰 **Price:** ₹[price]
+- 📐 **Area:** [sqft] sq ft
+- 🛏️ **Type:** [BHK] [property type]
+- ✨ **Highlights:** [any special features]
 
 IMPORTANT RULES FOR PROPERTY LISTINGS:
 - If you receive property listings in the context, ALWAYS show them to the user.
@@ -29,14 +43,16 @@ IMPORTANT RULES FOR PROPERTY LISTINGS:
 - If the user asks for a specific area and you have properties from the same city, show those and mention they are nearby.
 - Always present available properties confidently and professionally.
 - If web search results are provided combine them naturally with database listings.
+- Show maximum 5 properties per response.
+- NEVER use markdown tables.
 
-IMPORTANT: Always end EVERY response with this exact line:
+IMPORTANT: Always end EVERY response with this exact line on its own:
 [ACTIONS: Show More Options, Refine by Price, Refine by Location, Refine by Type, Schedule a Visit]
 
 When user asks to refine by price ask for their budget range.
 When user asks to refine by location ask which area or neighbourhood they prefer.
 When user asks to refine by type ask if they want apartment, villa, house, plot or commercial.
-When user asks to schedule a visit say: "Great! Please share your name and contact number and our agent will reach out to you within 24 hours."
+When user asks to schedule a visit say: "Great! Please share your name and contact number and our agent will reach out to you within 24 hours. 🏡"
 Always remember previous conversation context and use it to give better recommendations."""
 
 
@@ -54,7 +70,6 @@ def search_web_for_properties(query):
                 "content": f"Search for real estate properties in India: {query}. Find maximum 3 listings from 99acres, MagicBricks or Housing.com. Return only property name, location, price and area. Be very brief."
             }]
         )
-
         web_results = ""
         for block in response.content:
             if hasattr(block, 'text'):
@@ -82,6 +97,11 @@ def get_ai_response(user_message, conversation_history, relevant_properties=None
             property_context += f"- {prop.title} | {prop.property_type} | {prop.location}, {prop.city} | Rs.{prop.price} | {prop.area_sqft} sqft | {prop.bedrooms} BHK\n"
 
     web_context = ""
+    if len(props_list) < 3:
+        web_results = search_web_for_properties(user_message)
+        if web_results:
+            web_context = f"\n\nAdditional current online listings:\n{web_results}"
+
     full_message = user_message + property_context + web_context
 
     messages.append({

@@ -12,11 +12,20 @@ from django.views.decorators.csrf import csrf_exempt
 from .lead_detector import detect_and_save_lead
 
 
-def search_properties(user_message):
+def search_properties(user_message, conversation_history=None):
     message_lower = user_message.lower()
 
     cities = ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'pune', 'kolkata']
     found_city = next((city for city in cities if city in message_lower), None)
+
+    if not found_city and conversation_history:
+        for msg in reversed(list(conversation_history)):
+            for city in cities:
+                if city in msg.content.lower():
+                    found_city = city
+                    break
+            if found_city:
+                break
 
     area_to_city = {
         'madhapur': 'hyderabad', 'gachibowli': 'hyderabad',
@@ -27,10 +36,8 @@ def search_properties(user_message):
         'indiranagar': 'bangalore', 'hsr layout': 'bangalore',
         'electronic city': 'bangalore', 'jp nagar': 'bangalore',
         'bandra': 'mumbai', 'andheri': 'mumbai', 'powai': 'mumbai',
-        'worli': 'mumbai', 'juhu': 'mumbai',
         'hinjewadi': 'pune', 'kothrud': 'pune', 'wakad': 'pune',
-        'anna nagar': 'chennai', 'velachery': 'chennai',
-        'adyar': 'chennai', 'tambaram': 'chennai',
+        'anna nagar': 'chennai', 'velachery': 'chennai', 'adyar': 'chennai',
         'salt lake': 'kolkata', 'new town': 'kolkata',
         'dwarka': 'delhi', 'noida': 'delhi', 'gurgaon': 'delhi',
     }
@@ -43,14 +50,17 @@ def search_properties(user_message):
 
     property_types = ['apartment', 'flat', 'house', 'villa', 'plot', 'commercial', 'office']
     found_type = next((pt for pt in property_types if pt in message_lower), None)
+    if not found_type and conversation_history:
+        for msg in reversed(list(conversation_history)):
+            found_type = next((pt for pt in property_types if pt in msg.content.lower()), None)
+            if found_type:
+                break
     if found_type == 'flat':
         found_type = 'apartment'
 
     filters = Q(is_available=True)
-
     if found_city:
         filters &= (Q(city__icontains=found_city) | Q(location__icontains=found_city))
-
     if found_type:
         filters &= Q(property_type__icontains=found_type)
 
@@ -79,7 +89,7 @@ def chat_stream(request):
 
     conversation, created = Conversation.objects.get_or_create(session_id=session_id)
     history = conversation.messages.all().order_by("created_at")
-    relevant_properties = search_properties(user_message)
+    relevant_properties = search_properties(user_message, history)
 
     Message.objects.create(conversation=conversation, role="user", content=user_message)
     detect_and_save_lead(user_message, session_id, history)
@@ -111,13 +121,12 @@ def chat(request):
 
     conversation, created = Conversation.objects.get_or_create(session_id=session_id)
     history = conversation.messages.all().order_by('created_at')
-    relevant_properties = search_properties(user_message)
+    relevant_properties = search_properties(user_message, history)
 
     Message.objects.create(conversation=conversation, role='user', content=user_message)
     detect_and_save_lead(user_message, session_id, history)
 
     ai_reply = get_ai_response_full(user_message, history, relevant_properties)
-
     Message.objects.create(conversation=conversation, role='assistant', content=ai_reply)
 
     return Response({'reply': ai_reply, 'session_id': session_id})

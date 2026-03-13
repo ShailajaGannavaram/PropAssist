@@ -40,9 +40,8 @@ FORMAT FOR EACH PROPERTY:
 IMPORTANT RULES FOR PROPERTY LISTINGS:
 - If you receive property listings in the context, ALWAYS show them to the user.
 - Never say you don't have listings if properties are provided in context.
-- If the user asks for a specific area and you have properties from the same city, show those and mention they are nearby.
+- If the user asks for a specific area and you have properties from the same city show those and mention they are nearby.
 - Always present available properties confidently and professionally.
-- If web search results are provided combine them naturally with database listings.
 - Show maximum 5 properties per response.
 - NEVER use markdown tables.
 
@@ -54,29 +53,6 @@ When user asks to refine by location ask which area or neighbourhood they prefer
 When user asks to refine by type ask if they want apartment, villa, house, plot or commercial.
 When user asks to schedule a visit say: "Great! Please share your name and contact number and our agent will reach out to you within 24 hours. 🏡"
 Always remember previous conversation context and use it to give better recommendations."""
-
-
-def search_web_for_properties(query):
-    try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=500,
-            tools=[{
-                "type": "web_search_20250305",
-                "name": "web_search"
-            }],
-            messages=[{
-                "role": "user",
-                "content": f"Search for real estate properties in India: {query}. Find maximum 3 listings from 99acres, MagicBricks or Housing.com. Return only property name, location, price and area. Be very brief."
-            }]
-        )
-        web_results = ""
-        for block in response.content:
-            if hasattr(block, 'text'):
-                web_results += block.text
-        return web_results
-    except Exception:
-        return ""
 
 
 def get_ai_response(user_message, conversation_history, relevant_properties=None):
@@ -96,13 +72,7 @@ def get_ai_response(user_message, conversation_history, relevant_properties=None
         for prop in props_list:
             property_context += f"- {prop.title} | {prop.property_type} | {prop.location}, {prop.city} | Rs.{prop.price} | {prop.area_sqft} sqft | {prop.bedrooms} BHK\n"
 
-    web_context = ""
-    if len(props_list) < 3:
-        web_results = search_web_for_properties(user_message)
-        if web_results:
-            web_context = f"\n\nAdditional current online listings:\n{web_results}"
-
-    full_message = user_message + property_context + web_context
+    full_message = user_message + property_context
 
     messages.append({
         "role": "user",

@@ -60,20 +60,29 @@ body {
 }
 
 .suggestion {
-  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 10px;
-  font-size: 12.5px;
-  color: rgba(255,255,255,0.75);
+  color: white;
+  font-size: 13px;
   cursor: pointer;
-  line-height: 1.45;
-  transition: all 0.15s;
-  border: 1px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: 8px;
 }
 
 .suggestion:hover {
-  background: rgba(255,255,255,0.12);
-  color: white;
-  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateX(3px);
+}
+
+.suggestion-icon {
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .sidebar-footer {

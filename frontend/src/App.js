@@ -3,7 +3,11 @@ import "./App.css";
 
 function App() {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm **PropAssist**, your personal real estate advisor. I can help you find properties, answer questions about buying or renting, and guide you through the entire process. How can I help you today?", actions: [] }
+    { 
+      role: "assistant", 
+      content: "Hi! 👋 I'm PropAssist, your personal property advisor.\n\nLooking to **buy, rent or invest** in India? I'll help you find the perfect property in just a few questions!", 
+      actions: [] 
+    }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -107,9 +111,9 @@ function App() {
   };
 
   const suggestions = [
-    "2BHK apartments in Hyderabad under 50 lakhs",
-    "Best areas to invest in Bangalore",
-    "How does home loan work?",
+    { icon: "🏙️", text: "Buy a flat in Hyderabad" },
+    { icon: "💰", text: "Properties under 50 lakhs" },
+    { icon: "🏗️", text: "Invest in Bangalore" },
   ];
 
   return (
@@ -119,12 +123,15 @@ function App() {
           <div className="logo-icon">🏠</div>
           <span>PropAssist</span>
         </div>
-        <div className="sidebar-label">Quick Search</div>
+
+        <div className="sidebar-label">Quick Start</div>
         {suggestions.map((s, i) => (
-          <div key={i} className="suggestion" onClick={() => sendMessage(s)}>
-            {s}
+          <div key={i} className="suggestion" onClick={() => sendMessage(s.text)}>
+            <span className="suggestion-icon">{s.icon}</span>
+            <span>{s.text}</span>
           </div>
         ))}
+
         <div className="sidebar-footer">
           Powered by AI · Real Estate Only
         </div>

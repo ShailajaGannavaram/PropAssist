@@ -34,7 +34,7 @@ function App() {
     setMessages(prev => [...prev, { role: "assistant", content: "", actions: [] }]);
 
     try {
-      const response = await fetch("https://propertyassist.onrender.com/api/chat/stream/", {
+      const response = await fetch("https://propertyassist-3aws.onrender.com/api/chat/stream/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage, session_id: sessionId })

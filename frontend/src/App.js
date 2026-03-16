@@ -1,12 +1,42 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
+function renderContent(content) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return content.split('\n').map((line, i) => {
+    const parts = line.split(urlRegex);
+    return (
+      <span key={i}>
+        {parts.map((part, j) =>
+          urlRegex.test(part) ? (
+            <a
+              key={j}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#1a56db',
+                textDecoration: 'underline',
+                wordBreak: 'break-all',
+                fontWeight: '500'
+              }}
+            >
+              📄 Click here to Download Brochure
+            </a>
+          ) : part
+        )}
+        <br />
+      </span>
+    );
+  });
+}
+
 function App() {
   const [messages, setMessages] = useState([
-    { 
-      role: "assistant", 
-      content: "Hi! 👋 I'm PropAssist, your personal property advisor.\n\nLooking to **buy, rent or invest** in India? I'll help you find the perfect property in just a few questions!", 
-      actions: [] 
+    {
+      role: "assistant",
+      content: "Hi! 👋 I'm PropAssist, your personal property advisor.\n\nLooking to buy, rent or invest in India or Dubai? I'll help you find the perfect property in just a few questions!",
+      actions: []
     }
   ]);
   const [input, setInput] = useState("");
@@ -157,7 +187,10 @@ function App() {
               {msg.role === "assistant" && <div className="avatar">PA</div>}
               <div className="message-wrapper">
                 <div className="bubble">
-                  {msg.content}
+                  {msg.role === "assistant"
+                    ? renderContent(msg.content)
+                    : msg.content
+                  }
                   {msg.role === "assistant" && msg.content === "" && (
                     <span className="typing">
                       <span></span><span></span><span></span>

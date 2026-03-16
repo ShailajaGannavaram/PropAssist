@@ -7,6 +7,7 @@ from rest_framework import status
 from .models import Conversation, Message
 from .claude import get_ai_response, get_ai_response_full
 from properties.models import Property
+from projects.models import Project, UnitType, Amenity, PaymentPlan, NearbyPlace
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from .lead_detector import detect_and_save_lead
@@ -64,15 +65,73 @@ def search_properties(user_message, conversation_history=None):
     if found_type:
         filters &= Q(property_type__icontains=found_type)
 
-    properties = Property.objects.filter(filters).order_by('?')[:5]
+    properties = Property.objects.filter(filters).order_by('?')[:3]
 
     if not properties.exists() and found_city:
         properties = Property.objects.filter(
             Q(city__icontains=found_city) | Q(location__icontains=found_city),
             is_available=True
-        ).order_by('?')[:5]
+        ).order_by('?')[:3]
 
     return properties
+
+
+def search_projects(user_message, conversation_history=None):
+    message_lower = user_message.lower()
+
+    dubai_areas = ['dubai', 'ras al khaimah', 'abu dhabi', 'sharjah', 'uae',
+                   'rak', 'downtown', 'marina', 'palm', 'jbr']
+    found_dubai = any(area in message_lower for area in dubai_areas)
+
+    if not found_dubai and conversation_history:
+        for msg in reversed(list(conversation_history)):
+            if any(area in msg.content.lower() for area in dubai_areas):
+                found_dubai = True
+                break
+
+    unit_types = ['studio', 'villa', 'mansion', 'penthouse', '1br', '2br', '3br',
+                  '1 bedroom', '2 bedroom', '3 bedroom', 'retail']
+    found_unit = next((ut for ut in unit_types if ut in message_lower), None)
+
+    if not found_unit and conversation_history:
+        for msg in reversed(list(conversation_history)):
+            found_unit = next((ut for ut in unit_types if ut in msg.content.lower()), None)
+            if found_unit:
+                break
+
+    project_keywords = ['tonino', 'lamborghini', 'residences']
+    found_project = next((kw for kw in project_keywords if kw in message_lower), None)
+
+    projects_data = []
+
+    if found_dubai or found_project:
+        projects = Project.objects.all()
+        if found_project:
+            projects = projects.filter(name__icontains=found_project)
+
+        for project in projects[:3]:
+            project_info = {
+                'project': project,
+                'unit_types': [],
+                'amenities': [],
+                'payment_plans': [],
+                'nearby_places': []
+            }
+
+            if found_unit:
+                unit_filter = found_unit.replace(' bedroom', 'br').replace(' ', '')
+                units = project.unit_types.filter(unit_type__icontains=unit_filter)
+            else:
+                units = project.unit_types.all()
+
+            project_info['unit_types'] = list(units[:5])
+            project_info['amenities'] = list(project.amenities.all()[:8])
+            project_info['payment_plans'] = list(project.payment_plans.all()[:5])
+            project_info['nearby_places'] = list(project.nearby_places.all()[:5])
+
+            projects_data.append(project_info)
+
+    return projects_data
 
 
 @csrf_exempt
@@ -89,7 +148,9 @@ def chat_stream(request):
 
     conversation, created = Conversation.objects.get_or_create(session_id=session_id)
     history = conversation.messages.all().order_by("created_at")
+
     relevant_properties = search_properties(user_message, history)
+    relevant_projects = search_projects(user_message, history)
 
     Message.objects.create(conversation=conversation, role="user", content=user_message)
     detect_and_save_lead(user_message, session_id, history)
@@ -97,7 +158,7 @@ def chat_stream(request):
     full_reply = []
 
     def stream_generator():
-        for chunk in get_ai_response(user_message, history, relevant_properties):
+        for chunk in get_ai_response(user_message, history, relevant_properties, relevant_projects):
             full_reply.append(chunk)
             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
@@ -121,12 +182,14 @@ def chat(request):
 
     conversation, created = Conversation.objects.get_or_create(session_id=session_id)
     history = conversation.messages.all().order_by('created_at')
+
     relevant_properties = search_properties(user_message, history)
+    relevant_projects = search_projects(user_message, history)
 
     Message.objects.create(conversation=conversation, role='user', content=user_message)
     detect_and_save_lead(user_message, session_id, history)
 
-    ai_reply = get_ai_response_full(user_message, history, relevant_properties)
+    ai_reply = get_ai_response_full(user_message, history, relevant_properties, relevant_projects)
     Message.objects.create(conversation=conversation, role='assistant', content=ai_reply)
 
     return Response({'reply': ai_reply, 'session_id': session_id})

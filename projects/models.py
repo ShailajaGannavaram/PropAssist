@@ -13,6 +13,7 @@ class Project(models.Model):
     interior_video_url = models.URLField(blank=True)
     story_video_url = models.URLField(blank=True)
     highlight_video_url = models.URLField(blank=True)
+    brochure_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -79,14 +79,16 @@ def search_properties(user_message, conversation_history=None):
 def search_projects(user_message, conversation_history=None):
     message_lower = user_message.lower()
 
-    dubai_areas = ['dubai', 'ras al khaimah', 'abu dhabi', 'sharjah', 'uae',
-                   'rak', 'downtown', 'marina', 'palm', 'jbr']
-    found_dubai = any(area in message_lower for area in dubai_areas)
+    all_countries = ['dubai', 'uae', 'ras al khaimah', 'rak', 'abu dhabi',
+                     'sharjah', 'downtown', 'marina', 'palm', 'jbr',
+                     'property', 'properties', 'invest', 'buy', 'purchase']
 
-    if not found_dubai and conversation_history:
+    found_international = any(area in message_lower for area in all_countries)
+
+    if not found_international and conversation_history:
         for msg in reversed(list(conversation_history)):
-            if any(area in msg.content.lower() for area in dubai_areas):
-                found_dubai = True
+            if any(area in msg.content.lower() for area in all_countries):
+                found_international = True
                 break
 
     unit_types = ['studio', 'villa', 'mansion', 'penthouse', '1br', '2br', '3br',
@@ -99,37 +101,51 @@ def search_projects(user_message, conversation_history=None):
             if found_unit:
                 break
 
-    project_keywords = ['tonino', 'lamborghini', 'residences']
-    found_project = next((kw for kw in project_keywords if kw in message_lower), None)
+    all_project_names = list(Project.objects.values_list('name', flat=True))
+    found_project = None
+    for name in all_project_names:
+        name_words = name.lower().split()
+        if any(word in message_lower for word in name_words if len(word) > 3):
+            found_project = name
+            break
+
+    if not found_project and conversation_history:
+        for msg in reversed(list(conversation_history)):
+            for name in all_project_names:
+                name_words = name.lower().split()
+                if any(word in msg.content.lower() for word in name_words if len(word) > 3):
+                    found_project = name
+                    break
+            if found_project:
+                break
 
     projects_data = []
 
-    if found_dubai or found_project:
-        projects = Project.objects.all()
-        if found_project:
-            projects = projects.filter(name__icontains=found_project)
+    projects = Project.objects.all()
+    if found_project:
+        projects = projects.filter(name__icontains=found_project.split()[0])
 
-        for project in projects[:3]:
-            project_info = {
-                'project': project,
-                'unit_types': [],
-                'amenities': [],
-                'payment_plans': [],
-                'nearby_places': []
-            }
+    for project in projects[:3]:
+        project_info = {
+            'project': project,
+            'unit_types': [],
+            'amenities': [],
+            'payment_plans': [],
+            'nearby_places': []
+        }
 
-            if found_unit:
-                unit_filter = found_unit.replace(' bedroom', 'br').replace(' ', '')
-                units = project.unit_types.filter(unit_type__icontains=unit_filter)
-            else:
-                units = project.unit_types.all()
+        if found_unit:
+            unit_filter = found_unit.replace(' bedroom', 'br').replace(' ', '')
+            units = project.unit_types.filter(unit_type__icontains=unit_filter)
+        else:
+            units = project.unit_types.all()
 
-            project_info['unit_types'] = list(units[:5])
-            project_info['amenities'] = list(project.amenities.all()[:8])
-            project_info['payment_plans'] = list(project.payment_plans.all()[:5])
-            project_info['nearby_places'] = list(project.nearby_places.all()[:5])
+        project_info['unit_types'] = list(units[:8])
+        project_info['amenities'] = list(project.amenities.all()[:8])
+        project_info['payment_plans'] = list(project.payment_plans.all()[:12])
+        project_info['nearby_places'] = list(project.nearby_places.all()[:5])
 
-            projects_data.append(project_info)
+        projects_data.append(project_info)
 
     return projects_data
 

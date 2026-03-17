@@ -4,6 +4,8 @@ from django.db import models
 class Project(models.Model):
     name = models.CharField(max_length=200)
     location = models.CharField(max_length=200)
+    country = models.CharField(max_length=100, default='UAE')
+    currency = models.CharField(max_length=10, default='AED')
     developer = models.CharField(max_length=200)
     total_units = models.IntegerField(default=0)
     handover_date = models.CharField(max_length=100, blank=True)
